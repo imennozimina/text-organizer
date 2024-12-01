@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Organizer</title>
+<link rel="icon" type="image/png" href="img/org.webp">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #2f3131;
+        color: #e0d5c2;
+        margin: 0;
+        padding: 20px;
+    }
+    .editor-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    textarea {
+        width: 100%;
+        max-width: 1200px;
+        height: 300px;
+        background-color: #f8f1e5;
+        color: #352f44;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    button {
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    button:hover {
+        opacity: 0.9;
+    }
+    .btn-number { background-color: #6b8f71; color: #fff; }
+    .btn-br { background-color: #f9ba32; color: #000; }
+    .btn-find-replace { background-color: #426e86; color: #fff; }
+    .btn-undo, .btn-redo { background-color: #f9ba32; color: #fff; }
+    .btn-clear { background-color: #426e86; color: #fff; }
+    .btn-custom-add { background-color: #426e86; color: #fff; }
+    input[type="text"], input[type="number"] {
+        background-color: #DDC5A2;
+        color: #352f44;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        max-width: 150px;
+        text-align: center;
+    }
+    .history-container {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    .history-btn {
+        background-color: #a2b4c2;
+        color: #352f44;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .history-btn:hover {
+        background-color: #8296a6;
+    }
+</style>
+</head>
+<body>
+<div class="editor-container">
+    <textarea id="textArea" placeholder="Введите текст..."></textarea>
+    <div class="buttons">
+        <input id="startNumber" type="number" value="1" min="1">
+        <button class="btn-number" onclick="numberLines()">☑️</button>
+        <button class="btn-br" onclick="addBreaks()"><b>&lt;br&gt;</b></button>
+
+        <input id="findText" type="text" placeholder="Find">
+        <input id="replaceText" type="text" placeholder="Replace">
+        <button class="btn-find-replace" onclick="findAndReplace()">Replace All</button>
+        <button class="btn-undo" onclick="undo()">↩️</button>
+        <button class="btn-redo" onclick="redo()">↪️</button>
+        <button class="btn-clear" onclick="clearText()">🧹 Clear</button>
+    </div>
+    <div class="buttons">
+        <input id="customText" type="text" placeholder="Custom Text">
+        <button class="btn-custom-add" onclick="addCustomText('start')">Start Line</button>
+        <button class="btn-custom-add" onclick="addCustomText('end')">End Line</button>
+    </div>
+    <div class="history-container" id="historyContainer"></div>
+</div>
+
+<script>
+    let history = [];
+    let historyIndex = -1;
+    let replaceHistory = [];
+
+    function saveState() {
+        const textArea = document.getElementById("textArea");
+        history = history.slice(0, historyIndex + 1);
+        history.push(textArea.value);
+        historyIndex = history.length - 1;
+        console.log("State saved. Current history:", history);
+    }
+
+    function undo() {
+        if (historyIndex > 0) {
+            historyIndex--;
+            document.getElementById("textArea").value = history[historyIndex];
+            console.log("Undo action performed. Current text:", history[historyIndex]);
+        }
+    }
+
+    function redo() {
+        if (historyIndex < history.length - 1) {
+            historyIndex++;
+            document.getElementById("textArea").value = history[historyIndex];
+            console.log("Redo action performed. Current text:", history[historyIndex]);
+        }
+    }
+
+    function clearText() {
+        const textArea = document.getElementById("textArea");
+        textArea.value = "";
+        saveState();
+        console.log("Text area cleared.");
+    }
+
+    document.getElementById("textArea").addEventListener("input", saveState);
+    saveState();
+
+    function numberLines() {
+        const textArea = document.getElementById("textArea");
+        const startNumber = parseInt(document.getElementById("startNumber").value) || 1;
+        const selection = textArea.value.substring(textArea.selectionStart, textArea.selectionEnd);
+        const text = selection ? selection.split("\n") : textArea.value.split("\n");
+        let numberedText = "";
+        let count = startNumber;
+
+        text.forEach((line) => {
+            if (line.trim() !== "") {
+                numberedText += count + ". " + line + "\n";
+                count++;
+            } else {
+                numberedText += "\n";
+            }
+        });
+
+        if (selection) {
+            const before = textArea.value.substring(0, textArea.selectionStart);
+            const after = textArea.value.substring(textArea.selectionEnd);
+            textArea.value = before + numberedText.trim() + after;
+        } else {
+            textArea.value = numberedText.trim();
+        }
+        console.log("Numbering lines. Resulting text:", textArea.value);
+        saveState();
+    }
+
+    function addBreaks() {
+        const textArea = document.getElementById("textArea");
+        const text = textArea.value.split("\n").map(line => line + "<br>").join("\n");
+        textArea.value = text;
+        console.log("Added <br> tags. Resulting text:", textArea.value);
+        saveState();
+    }
+
+    function addCustomText(position) {
+        const textArea = document.getElementById("textArea");
+        const customText = document.getElementById("customText").value;
+        const selection = textArea.value.substring(textArea.selectionStart, textArea.selectionEnd);
+        const selectedLines = selection.split("\n");
+
+        if (!customText) return;
+
+        const modifiedLines = selectedLines.map(line => {
+            if (position === "start") return customText + line;
+            if (position === "end") return line + customText;
+        });
+
+        const before = textArea.value.substring(0, textArea.selectionStart);
+        const after = textArea.value.substring(textArea.selectionEnd);
+        textArea.value = before + modifiedLines.join("\n") + after;
+        console.log(`Added custom text at ${position}. Resulting text:`, textArea.value);
+        saveState();
+    }
+
+    function findAndReplace() {
+        const textArea = document.getElementById("textArea");
+        const findText = document.getElementById("findText").value;
+        const replaceText = document.getElementById("replaceText").value;
+
+        if (findText === "") return;
+
+        try {
+            const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "g");
+            textArea.value = textArea.value.replace(regex, replaceText);
+            console.log(`Replaced "${findText}" with "${replaceText}". Resulting text:`, textArea.value);
+            if (!replaceHistory.some(entry => entry.findText === findText && entry.replaceText === replaceText)) {
+                saveReplaceHistory(findText, replaceText);
+            }
+        } catch (e) {
+            console.error("Error with regular expression:", e);
+        }
+        saveState();
+    }
+
+    function saveReplaceHistory(findText, replaceText) {
+        replaceHistory.unshift({ findText, replaceText });
+        if (replaceHistory.length > 10) replaceHistory.pop();
+        updateReplaceHistoryUI();
+    }
+
+    function updateReplaceHistoryUI() {
+        const historyContainer = document.getElementById("historyContainer");
+        historyContainer.innerHTML = "";
+        replaceHistory.forEach((entry) => {
+            const button = document.createElement("button");
+            button.classList.add("history-btn");
+            button.textContent = `${entry.findText} → ${entry.replaceText}`;
+            button.onclick = () => {
+                document.getElementById("findText").value = entry.findText;
+                document.getElementById("replaceText").value = entry.replaceText;
+                findAndReplace();
+            };
+            historyContainer.appendChild(button);
+        });
+    }
+</script>
+</body>
+</html>
