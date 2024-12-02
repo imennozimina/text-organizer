@@ -32,6 +32,36 @@
         font-size: 16px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
+    .copy-button {
+        width: 25px;
+        height: 25px;
+        position: relative;
+        left: 90px;
+        top: 10px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+    }
+ 
+    .copied-text {
+        height: 15px;
+        background-color: #52968b;
+        color: #fff;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        position: relative;
+        left: 60px;
+        top: 10px;
+        transform: translateX(30px);
+    }
+    .copied-text.visible {
+        opacity: 10;
+        visibility: visible;
+        transition: opacity 0.3s;
+    }
     .buttons {
         display: flex;
         flex-wrap: wrap;
@@ -88,18 +118,21 @@
 <body>
 <div class="editor-container">
     <textarea id="textArea" placeholder="Введите текст..."></textarea>
+    
     <div class="buttons">
         <input id="startNumber" type="number" value="1" min="1">
         <button class="btn-number" onclick="numberLines()">☑️</button>
         <button class="btn-br" onclick="addBreaks()"><b>&lt;br&gt;</b></button>
-
         <input id="findText" type="text" placeholder="Find">
         <input id="replaceText" type="text" placeholder="Replace">
         <button class="btn-find-replace" onclick="findAndReplace()">Replace All</button>
         <button class="btn-undo" onclick="undo()">↩️</button>
         <button class="btn-redo" onclick="redo()">↪️</button>
         <button class="btn-clear" onclick="clearText()">🧹 Clear</button>
+        <img class="copy-button" onclick="copyToClipboard()" src="img/copy_icon.svg" alt="Copy">
+        <div class="copied-text" id="copiedText">Copied</div>
     </div>
+
     <div class="buttons">
         <input id="customText" type="text" placeholder="Custom Text">
         <button class="btn-custom-add" onclick="addCustomText('start')">Start Line</button>
@@ -242,6 +275,19 @@
                 findAndReplace();
             };
             historyContainer.appendChild(button);
+        });
+    }
+    function copyToClipboard() {
+        const textArea = document.getElementById("textArea");
+        navigator.clipboard.writeText(textArea.value).then(() => {
+            const copiedTextElement = document.getElementById("copiedText");
+            copiedTextElement.classList.add("visible");
+            setTimeout(() => {
+                copiedTextElement.classList.remove("visible");
+            }, 1000);
+            console.log("Text copied to clipboard:", textArea.value);
+        }).catch(err => {
+            console.error("Failed to copy text: ", err);
         });
     }
 </script>
